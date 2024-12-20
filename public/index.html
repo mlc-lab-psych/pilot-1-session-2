@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alive Experiment</title>
+    <script src="https://unpkg.com/jspsych@8.0.0"></script>
+    <link href="https://unpkg.com/jspsych@8.0.0/css/jspsych.css" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-image-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-categorize-image@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-html-form@1.0.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey@1.0.1"></script>
+    <link rel="stylesheet" href="https://unpkg.com/@jspsych/plugin-survey@1.0.1/css/survey.css">
+
+    <script>
+        console.warn = () => {};
+        let test_stimuli;
+        let images;
+
+        async function preload_images(data){
+            let preloadedImages = []
+            data.forEach(img=>{
+                let ogImg = new Image();
+                ogImg.src = img;
+                preloadedImages.push(ogImg)
+            })
+            return preloadedImages
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('https://pilot-1.vercel.app/get-data'); // Make the GET request
+                // const response = await fetch('http://localhost:3000/get-data'); // Make the GET request
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json(); // Parse the JSON response
+                test_stimuli = data['test_stimuli']
+                images = data['images']
+                await preload_images(images).then((result)=>{
+                    images = result
+                })
+
+                initializeJsPsych()
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function initializeJsPsych(){
+            const jsPsych = initJsPsych({
+                show_progress_bar: true,
+                auto_update_progress_bar: false
+            });
+
+            function getParamFromURL(name) {
+                name = name.replace(/\[/, "\\[").replace(/]/, "\\]");
+                let regex = new RegExp("[?&]" + name + "=([^&#]*)");
+                let results = regex.exec(window.location.href);
+                try{
+                    let decoded = decodeURIComponent(results[1])
+                    return results ? decoded : "";
+                }
+                catch(error){
+                    return ""
+                }
+            }
+
+            let subject_id = "alive_images_" + Math.floor(Math.random() * 1000000);
+            let worker_id = getParamFromURL('PROLIFIC_PID') || subject_id;
+            let study_id = getParamFromURL('STUDY_ID') || "NULL";
+            let session_id = getParamFromURL('SESSION_ID') || "NULL";
+
+            // Record subject info in the jsPsych data
+            jsPsych.data.addProperties({
+                subject: subject_id,
+                worker_id: worker_id,
+                study_id: study_id,
+                session_id: session_id
+            });
+
+            let timeline = []
+
+            const welcome_block = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus: "<p>Welcome to the experiment.</p><p>Press any key to begin.</p>",
+            };
+
+            timeline.push(welcome_block)
+
+            const consent ={
+                type: jsPsychSurveyHtmlForm,
+                preamble: '',
+                html: `
+                    <style>
+                    .jspsych-content{
+                    text-align: left;
+                    }
+                    </style>
+                    <div style="max-width: 1200px">
+                            <label style="text-align: left !important;">The research study you are about to do is sponsored by Rochester Institute of Technology (RIT). It is part of protocol #02111723. The task you are asked to do involves making simple responses to images, words, and sentences. For example, you may be asked to rate a pair of images on their similarity or to indicate how true you think a given sentence is. You may also be asked to complete a questionnaire about your background and your attitudes and interests. More detailed instructions for this specific task will be provided on the next screen.
+
+<br><br>This task has no direct benefits. We do not anticipate any psychosocial, social, or legal risks. Participants may become fatigued or frustrated due to the length of the study. The responses you submit as part of this task will be stored on a secure server and accessible only to researchers who have been approved by RIT. Processed data with all identifiers removed could be used for future research studies or distributed to another investigator for future research studies without additional informed consent from the subject or a legally authorized representative.
+
+<br><br>You are free to decline to participate, to end participation at any time for any reason, or to refuse to answer any individual question without penalty or loss of earned compensation. We will not retain data from partial responses. If you would like to withdraw your data after participating, you may send an email to lrrgsh@rit.edu or complete this form which will allow you to make a request anonymously.
+
+<br><br>If you have any questions or concerns about this task, please contact the principal investigator: Prof. Lilia Rissman at lrrgsh@rit.edu.
+
+<br><br>If you are not satisfied with response of the research team, have more questions, or want to talk with someone about your rights as a research participant, you should contact RIT’s Human Subjects Research Office at 585-475-7673, hmfsrs@rit.edu.
+
+<br><br>If you agree to participate, please click "I agree" below. If not, please close your browser window now.</label><br><br>
+                            <input type="checkbox" id="agree" name="consent" value="Agreed" required>
+                            <label for="agree">I agree</label><br><br>
+                    </div>
+                `
+            }
+
+            timeline.push(consent)
+
+            const demographics = {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '<h2>Demographic Information</h2>',
+                html: `
+                        <div class="container">
+                            <label for="age" style="font-weight: bold">Age:</label><br>
+                            <input type="text" id="age" name="age" required><br><br>
+
+                            <label style="font-weight: bold">Gender:</label><br>
+                            <input type="radio" id="male" name="gender" value="Male" required>
+                            <label for="male">Male</label><br>
+                            <input type="radio" id="female" name="gender" value="Female" required>
+                            <label for="female">Female</label><br>
+                            <input type="radio" id="third" name="gender" value="Third gender" required>
+                            <label for="third">Non-binary/third gender</label><br>
+                            <input type="radio" id="other" name="gender" value="Prefer not to say" required>
+                            <label for="other">Prefer not to say</label><br><br><br>
+
+                            <label style="font-weight: bold">Race/Ethnicity (Select all that apply):</label><br>
+                            <input type="checkbox" id="race_white" name="race_ethnicity" value="White">
+                            <label for="race_white">White</label><br>
+                            <input type="checkbox" id="race_black" name="race_ethnicity" value="Black or African American">
+                            <label for="race_black">Black or African American</label><br>
+                            <input type="checkbox" id="race_asian" name="race_ethnicity" value="Asian">
+                            <label for="race_asian">Asian</label><br>
+                            <input type="checkbox" id="race_native" name="race_ethnicity" value="Native American or Alaska Native">
+                            <label for="race_native">Native American or Alaska Native</label><br>
+                            <input type="checkbox" id="race_hispanic" name="race_ethnicity" value="Hispanic or Latino">
+                            <label for="race_hispanic">Hispanic or Latino</label><br>
+                            <input type="checkbox" id="race_pacific" name="race_ethnicity" value="Native Hawaiian or Other Pacific Islander">
+                            <label for="race_pacific">Native Hawaiian or Other Pacific Islander</label><br>
+                            <input type="checkbox" id="race_other" name="race_ethnicity" value="Other">
+                            <label for="race_other">Other</label><br><br>
+
+                            <label style="font-weight: bold" for="nationality">Nationality:</label><br>
+                            <input type="text" id="nationality" name="nationality" required><br><br>
+                        </div>
+                      `,
+                button_label: 'Continue'
+            }
+
+            timeline.push(demographics)
+
+            const demographics_two = {
+                type: jsPsychSurveyHtmlForm,
+                preamble: '<h2>Demographic Information</h2>',
+                html: `
+                        <style>
+                          .container {
+                            display: flex;
+                            justify-content: center;
+                          }
+                          .column {
+                            width: 45%;
+                          }
+                          .column input[type="text"], .column input[type="radio"], .column input[type="checkbox"] {
+                            margin-top: 5px;
+                            margin-bottom: 15px;
+                          }
+                        </style>
+
+                        <div class="container">
+                          <div class="column">
+                            <label style="font-weight: bold">Level of Education:</label><br>
+                            <input type="radio" id="high_school" name="education" value="High School Degree/GED" required>
+                            <label for="high_school">High School Degree/GED</label><br>
+                            <input type="radio" id="some_college" name="education" value="Some College" required>
+                            <label for="bachelor">Some College</label><br>
+                            <input type="radio" id="college_degree" name="education" value="College Degree" required>
+                            <label for="master">College Degree</label><br>
+                            <input type="radio" id="some_grad" name="education" value="Some Graduate Degree" required>
+                            <label for="doctorate">Some Graduate Degree</label><br>
+                            <input type="radio" id="grad_degree" name="education" value="Graduate Degree" required>
+                            <label for="other_edu">Graduate Degree</label><br><br>
+
+                            <label style="font-weight: bold">Are you a native speaker of American English (someone who grew up in the US and whose caregivers spoke English to them during childhood)?</label><br>
+                            <input type="radio" id="native_yes" name="native_speaker" value="Yes" required>
+                            <label for="native_yes">Yes</label><br>
+                            <input type="radio" id="native_no" name="native_speaker" value="No" required>
+                            <label for="native_no">No</label><br><br>
+
+                            <label style="font-weight: bold" for="comfortable_languages">Language(s) you use with most comfort and confidence:</label><br>
+                            <input type="text" id="comfortable_language" name="comfortable_language" required><br><br>
+                          </div>
+                        </div>
+                      `,
+                button_label: 'Continue'
+            }
+
+            timeline.push(demographics_two)
+
+            const instructions = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus: "<p>In this experiment, you will see a single image on the screen.</p>" +
+                    "<p>Your task is to decide whether the entity in this image is <strong>alive</strong> or not.</p>" +
+                    "<p>Press the letter A on the keyboard if you think the entity is <strong>alive</strong>.</p>" +
+                    "<p>Press the letter N on the keyboard if you think the entity is <strong>not alive</strong>.</p>" +
+                    "<br>" +
+                    "<p>Some images contain more than one thing, technically speaking. Focus on the main thing in each image.</p>" +
+                    "<p>Be as accurate and as fast as you can. You will have at most 1 second to respond.</p>" +
+                    "<p>Between each image, you will see a small cross. Look at the cross but do not respond to it.</p>" +
+                    "<br>" +
+                    "<p>You will see 320 images.</p>" +
+                    "<br>"+ "<br>" +
+                    "<p>Press any key to begin.</p>",
+                post_trial_gap: 2000
+            };
+
+            timeline.push(instructions);
+
+            const fixation = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus: '<div style="font-size:60px;">+</div>',
+                choices: "NO_KEYS",
+                trial_duration: () => jsPsych.randomization.sampleWithoutReplacement([500, 650, 800, 950, 1100, 1250, 1400, 1500], 1)[0],
+                data: { test_part: 'fixation' }
+            };
+
+            let n_trials = 320;
+            let current_trials = 0;
+
+            const test = {
+                type: jsPsychCategorizeImage,
+                prompt:"<br/>Is this alive or not? [A/N]",
+                version:"",
+                stimulus: jsPsych.timelineVariable('url'),
+                choices: ['a', 'n'],
+                correct_text:"",
+                incorrect_text:"",
+                key_answer: jsPsych.timelineVariable('correct_response'),
+                trial_duration: 1000,
+                trial_ends_after_response: true,
+                feedback_duration:500,
+                timeout_message:"<p>No response detected. Please respond faster.</p>",
+                show_stim_with_feedback: false,
+                data:{
+                    test_part: jsPsych.timelineVariable('test_part'),
+                    url: jsPsych.timelineVariable('url'),
+                    category: jsPsych.timelineVariable('category'),
+                    correct_response: jsPsych.timelineVariable('correct_response')
+                },
+                on_finish: function(data) {
+                    current_trials += 1
+                    jsPsych.progressBar.progress = current_trials / n_trials;
+
+                    data.correct = jsPsych.pluginAPI.compareKeys(data.correct_response, data.response);
+                }
+            };
+
+            const test_procedure = {
+                timeline: [test],
+                timeline_variables: test_stimuli,
+                randomize_order: true
+            };
+
+            timeline.push(test_procedure);
+
+            const comment_block = {
+                type: jsPsychSurvey,
+                survey_json: {
+                    showQuestionNumbers: false,
+                    elements:
+                        [
+                            {
+                                type: 'text',
+                                title: "Do you have any comments about the study?",
+                                name: 'comments',
+                                placeholder: 'Comments here',
+                                columns: 80,
+                                isRequired: true
+                            },
+                            {
+                                type: 'radiogroup',
+                                title: "Did you experience any technical difficulties with this task?",
+                                name: 'technical_difficulties',
+                                choices: ["Yes", "No"],
+                                isRequired: true
+                            },
+                            {
+                                type: 'text',
+                                title: "If yes, please describe your experience.",
+                                name: 'difficulty_description',
+                                placeholder: 'Describe any technical difficulties',
+                                required: false
+                            }
+
+                        ]},
+                on_finish: function(data) {
+                    sendResults(jsPsych.data.get()['trials']);
+                }
+            };
+
+            timeline.push(comment_block);
+
+            const end_block = {
+                type: jsPsychHtmlKeyboardResponse,
+                stimulus: '<p>Thanks for participating!</p>' +
+                    '<p><a href="https://app.prolific.com/submissions/complete?cc=CYIS3IDD">Click here to return to Prolific and complete the study</a>.</p>',
+                choices: "NO_KEYS",
+            };
+            timeline.push(end_block);
+
+            jsPsych.run({timeline: timeline, preload_images: images})
+        }
+
+        async function sendResults(results) {
+            try {
+                // const response = await fetch('http://localhost:3000/submit-results', {
+                const response = await fetch('https://pilot-1.vercel.app/submit-results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(results) // Send results as JSON
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json(); // Parse the JSON response
+                console.log(result.message); // Log success message
+            } catch (error) {
+                console.error('Error sending results:', error);
+            }
+        }
+
+        window.onload = function() {
+            fetchData();
+        }
+    </script>
+</head>
+<body>
+
+</body>
+</html>
