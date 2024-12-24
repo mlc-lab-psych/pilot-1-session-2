@@ -189,8 +189,8 @@
                             <label for="bachelor">Some College</label><br>
                             <input type="radio" id="college_degree" name="education" value="College Degree" required>
                             <label for="master">College Degree</label><br>
-                            <input type="radio" id="some_grad" name="education" value="Some Graduate Degree" required>
-                            <label for="doctorate">Some Graduate Degree</label><br>
+                            <input type="radio" id="some_grad" name="education" value="Some Graduate Coursework" required>
+                            <label for="doctorate">Some Graduate Coursework</label><br>
                             <input type="radio" id="grad_degree" name="education" value="Graduate Degree" required>
                             <label for="other_edu">Graduate Degree</label><br><br>
 
@@ -271,7 +271,7 @@
             };
 
             const test_procedure = {
-                timeline: [test],
+                timeline: [fixation, test],
                 timeline_variables: test_stimuli,
                 randomize_order: true
             };
