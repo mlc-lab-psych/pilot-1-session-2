@@ -119,96 +119,13 @@
 
             timeline.push(consent)
 
-            const demographics = {
-                type: jsPsychSurveyHtmlForm,
-                preamble: '<h2>Demographic Information</h2>',
-                html: `
-                        <div class="container">
-                            <label for="age" style="font-weight: bold">Age:</label><br>
-                            <input type="text" id="age" name="age" required><br><br>
+            const survey_message = {
+                type: jsPsychHtmlKeyboardResponse,
+                version:"",
+                stimulus: "<p>You will do a task deciding whether various things are alive, and then you will answer a series of survey questions.</p><p>Press any key to begin.</p>",
+            };
 
-                            <label style="font-weight: bold">Gender:</label><br>
-                            <input type="radio" id="male" name="gender" value="Male" required>
-                            <label for="male">Male</label><br>
-                            <input type="radio" id="female" name="gender" value="Female" required>
-                            <label for="female">Female</label><br>
-                            <input type="radio" id="third" name="gender" value="Third gender" required>
-                            <label for="third">Non-binary/third gender</label><br>
-                            <input type="radio" id="other" name="gender" value="Prefer not to say" required>
-                            <label for="other">Prefer not to say</label><br><br><br>
-
-                            <label style="font-weight: bold">Race/Ethnicity (Select all that apply):</label><br>
-                            <input type="checkbox" id="race_white" name="race_ethnicity" value="White">
-                            <label for="race_white">White</label><br>
-                            <input type="checkbox" id="race_black" name="race_ethnicity" value="Black or African American">
-                            <label for="race_black">Black or African American</label><br>
-                            <input type="checkbox" id="race_asian" name="race_ethnicity" value="Asian">
-                            <label for="race_asian">Asian</label><br>
-                            <input type="checkbox" id="race_native" name="race_ethnicity" value="Native American or Alaska Native">
-                            <label for="race_native">Native American or Alaska Native</label><br>
-                            <input type="checkbox" id="race_hispanic" name="race_ethnicity" value="Hispanic or Latino">
-                            <label for="race_hispanic">Hispanic or Latino</label><br>
-                            <input type="checkbox" id="race_pacific" name="race_ethnicity" value="Native Hawaiian or Other Pacific Islander">
-                            <label for="race_pacific">Native Hawaiian or Other Pacific Islander</label><br>
-                            <input type="checkbox" id="race_other" name="race_ethnicity" value="Other">
-                            <label for="race_other">Other</label><br><br>
-
-                            <label style="font-weight: bold" for="nationality">Nationality:</label><br>
-                            <input type="text" id="nationality" name="nationality" required><br><br>
-                        </div>
-                      `,
-                button_label: 'Continue'
-            }
-
-            timeline.push(demographics)
-
-            const demographics_two = {
-                type: jsPsychSurveyHtmlForm,
-                preamble: '<h2>Demographic Information</h2>',
-                html: `
-                        <style>
-                          .container {
-                            display: flex;
-                            justify-content: center;
-                          }
-                          .column {
-                            width: 45%;
-                          }
-                          .column input[type="text"], .column input[type="radio"], .column input[type="checkbox"] {
-                            margin-top: 5px;
-                            margin-bottom: 15px;
-                          }
-                        </style>
-
-                        <div class="container">
-                          <div class="column">
-                            <label style="font-weight: bold">Level of Education:</label><br>
-                            <input type="radio" id="high_school" name="education" value="High School Degree/GED" required>
-                            <label for="high_school">High School Degree/GED</label><br>
-                            <input type="radio" id="some_college" name="education" value="Some College" required>
-                            <label for="bachelor">Some College</label><br>
-                            <input type="radio" id="college_degree" name="education" value="College Degree" required>
-                            <label for="master">College Degree</label><br>
-                            <input type="radio" id="some_grad" name="education" value="Some Graduate Coursework" required>
-                            <label for="doctorate">Some Graduate Coursework</label><br>
-                            <input type="radio" id="grad_degree" name="education" value="Graduate Degree" required>
-                            <label for="other_edu">Graduate Degree</label><br><br>
-
-                            <label style="font-weight: bold">Are you a native speaker of American English (someone who grew up in the US and whose caregivers spoke English to them during childhood)?</label><br>
-                            <input type="radio" id="native_yes" name="native_speaker" value="Yes" required>
-                            <label for="native_yes">Yes</label><br>
-                            <input type="radio" id="native_no" name="native_speaker" value="No" required>
-                            <label for="native_no">No</label><br><br>
-
-                            <label style="font-weight: bold" for="comfortable_languages">Language(s) you use with most comfort and confidence:</label><br>
-                            <input type="text" id="comfortable_language" name="comfortable_language" required><br><br>
-                          </div>
-                        </div>
-                      `,
-                button_label: 'Continue'
-            }
-
-            timeline.push(demographics_two)
+            timeline.push(survey_message)
 
             const instructions = {
                 type: jsPsychHtmlKeyboardResponse,
@@ -315,10 +232,12 @@
 
             timeline.push(comment_block);
 
+            const qualtricsURL = `https://rit.az1.qualtrics.com/jfe/form/SV_eVEiSqD8ltzytGm?PROLIFIC_PID=${worker_id}`;
+
             const end_block = {
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: '<p>Thanks for participating!</p>' +
-                    '<p><a href="https://app.prolific.com/submissions/complete?cc=CYIS3IDD">Click here to return to Prolific and complete the study</a>.</p>',
+                    `<p><a href="${qualtricsURL}">Click here to return to Prolific and complete the study</a>.</p>`,
                 choices: "NO_KEYS",
             };
             timeline.push(end_block);
