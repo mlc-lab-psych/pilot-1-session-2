@@ -195,6 +195,8 @@
 
             timeline.push(test_procedure);
 
+            const qualtricsURL = `https://rit.az1.qualtrics.com/jfe/form/SV_eVEiSqD8ltzytGm?PROLIFIC_PID=${worker_id}`;
+
             const comment_block = {
                 type: jsPsychSurvey,
                 survey_json: {
@@ -226,21 +228,13 @@
 
                         ]},
                 on_finish: function(data) {
-                    sendResults(jsPsych.data.get()['trials']);
+                    sendResults(jsPsych.data.get()['trials']).then(()=>{
+                        window.location = qualtricsURL
+                    });
                 }
             };
 
             timeline.push(comment_block);
-
-            const qualtricsURL = `https://rit.az1.qualtrics.com/jfe/form/SV_eVEiSqD8ltzytGm?PROLIFIC_PID=${worker_id}`;
-
-            const end_block = {
-                type: jsPsychHtmlKeyboardResponse,
-                stimulus: '<p>Thanks for participating!</p>' +
-                    `<p><a href="${qualtricsURL}">Click here to return to Prolific and complete the study</a>.</p>`,
-                choices: "NO_KEYS",
-            };
-            timeline.push(end_block);
 
             jsPsych.run({timeline: timeline, preload_images: images})
         }
